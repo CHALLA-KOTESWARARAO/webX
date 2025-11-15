@@ -1,0 +1,11 @@
+{% extends 'tracker/base.html' %}
+{% block content %}
+
+<div class="alert alert-success text-center mt-4">
+  🎉 {{ message }}
+  <br><strong>Score: {{ score }}%</strong>
+</div>
+
+<a href="{% url 'dashboard' %}" class="btn btn-primary w-100 mt-3">Back to Progress</a>
+
+{% endblock %}

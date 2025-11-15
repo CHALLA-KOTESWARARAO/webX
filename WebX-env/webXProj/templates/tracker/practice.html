@@ -1,0 +1,123 @@
+{% extends 'tracker/base.html' %}
+{% block content %}
+
+<h3 class="mb-3 text-center">Practice Interview Questions</h3>
+
+<div class="row g-4 justify-content-center">
+
+  <!-- Left panel – select category & topic -->
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">1️⃣ Choose Category & Topic</h5>
+
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="mode" value="start_test">
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Category</label>
+            <select name="category" id="category-select" class="form-select" required>
+              <option value="">-- Select Category --</option>
+              {% for c in categories %}
+              <option value="{{ c }}" {% if selected_category == c %}selected{% endif %}>{{ c }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Topic</label>
+            <select name="topic" id="topic-select" class="form-select" required>
+              <option value="">-- Select Topic --</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 fw-bold">
+            Start Test 🚀
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Right panel – Question display -->
+  <div class="col-md-8">
+    <div class="card shadow-lg">
+      <div class="card-body">
+
+        <h5 class="card-title">2️⃣ Answer the Questions</h5>
+
+        {% if question %}
+        
+        <div class="alert alert-info fw-bold text-center">
+          Question {{ index }} / {{ total }}
+        </div>
+
+        <p><strong>{{ question.question }}</strong></p>
+
+        <form method="post">
+          {% csrf_token %}
+          
+          <div class="mt-3">
+            {% for key, text in options.items %}
+            {% if text %}
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="radio" name="answer" id="opt{{ key }}" value="{{ key }}" required>
+              <label class="form-check-label" for="opt{{ key }}">
+                {{ key }}. {{ text }}
+              </label>
+            </div>
+            {% endif %}
+            {% endfor %}
+          </div>
+
+          {% if index == total %}
+          <button type="submit" name="mode" value="submit_test" class="btn btn-danger mt-3 fw-bold">
+            Submit Test 🏁
+          </button>
+          {% else %}
+          <button type="submit" name="mode" value="next_question" class="btn btn-success mt-3 fw-bold">
+            Next ➜
+          </button>
+          {% endif %}
+        </form>
+
+        {% else %}
+        <p class="text-muted text-center mt-4">
+          👈 Select category & topic then click <strong>"Start Test"</strong> to begin practicing!
+        </p>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<script>
+  const topicsData = {{ topics_by_category|safe }};
+  const catSelect = document.getElementById("category-select");
+  const topicSelect = document.getElementById("topic-select");
+
+  function loadTopics() {
+    let cat = catSelect.value;
+    topicSelect.innerHTML = '<option value="">-- Select Topic --</option>';
+
+    if (topicsData[cat]) {
+      topicsData[cat].forEach(topic => {
+        const opt = document.createElement("option");
+        opt.value = topic;
+        opt.textContent = topic;
+        if (topic === "{{ selected_topic }}") opt.selected = true;
+        topicSelect.appendChild(opt);
+      });
+    }
+  }
+
+  catSelect.addEventListener("change", loadTopics);
+  window.onload = loadTopics;
+</script>
+
+{% endblock %}

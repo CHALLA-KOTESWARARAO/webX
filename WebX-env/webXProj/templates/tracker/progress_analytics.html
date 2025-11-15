@@ -1,0 +1,76 @@
+{% extends "tracker/base.html" %}
+{% block content %}
+
+<h3 class="text-center mb-4 fw-bold">📊 Your Progress Analytics</h3>
+
+<div class="row g-4">
+
+  <!-- Pie Chart -->
+  <div class="col-md-6">
+    <div class="card shadow-sm p-3">
+      <h5 class="text-center fw-bold">Overall Completion</h5>
+      <canvas id="overallPieChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Bar Chart -->
+  <div class="col-md-6">
+    <div class="card shadow-sm p-3">
+      <h5 class="text-center fw-bold">Category Progress</h5>
+      <canvas id="categoryBarChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Back Button -->
+<div class="text-center mt-4">
+  <a href="{% url 'dashboard' %}" class="btn btn-secondary px-4 py-2">⬅ Back to Dashboard</a>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  const analyticsData = {{ analytics|safe }};
+  const completed = {{ total_completed }};
+  const pending = {{ total_pending }};
+
+  const labels = analyticsData.map(a => a.category);
+  const completedData = analyticsData.map(a => a.completed);
+  const pendingData = analyticsData.map(a => a.pending);
+
+  // Pie Chart
+  new Chart(document.getElementById("overallPieChart"), {
+    type: 'pie',
+    data: {
+      labels: ['Completed', 'Pending'],
+      datasets: [{
+        data: [completed, pending]
+      }]
+    }
+  });
+
+  // Bar Chart
+  new Chart(document.getElementById("categoryBarChart"), {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Completed',
+          data: completedData,
+        },
+        {
+          label: 'Pending',
+          data: pendingData
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+</script>
+
+{% endblock %}
