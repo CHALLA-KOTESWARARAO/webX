@@ -1,0 +1,113 @@
+{% extends 'tracker/base.html' %}
+
+{% block content %}
+<h3 class="mb-3">Your Interview Preparation</h3>
+
+<div class="row g-4">
+  <!-- Progress Card -->
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Progress</h5>
+        <p class="card-text mb-1">Completed: {{ done }} / {{ total }}</p>
+        <p class="card-text mb-1">Pending: {{ pending }}</p>
+
+        <div class="progress" style="height: 25px;">
+          <div class="progress-bar" role="progressbar"
+               style="width: {{ progress }}%;"
+               aria-valuenow="{{ progress }}"
+               aria-valuemin="0" aria-valuemax="100">
+              {{ progress }}%
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Topic -->
+  <div class="col-md-8">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Add New Topic</h5>
+
+        <form method="post" action="{% url 'add_topic' %}" class="row g-2">
+          {% csrf_token %}
+          
+          <div class="col-md-5">
+            <input type="text" name="name" class="form-control" placeholder="Topic name" required>
+          </div>
+
+          <div class="col-md-4">
+            <input type="text" name="category" class="form-control" placeholder="Category (e.g. HTML)">
+          </div>
+
+          <div class="col-md-3 d-grid">
+            <button type="submit" class="btn btn-primary">Add Topic</button>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Topics Table -->
+<div class="card shadow-sm mt-4">
+  <div class="card-body">
+    <h5 class="card-title">Your Topics</h5>
+
+    {% if topics %}
+      <div class="table-responsive">
+        <table class="table table-striped align-middle">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Topic</th>
+              <th>Category</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for topic in topics %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>{{ topic.name }}</td>
+              <td>{{ topic.category|default:"-" }}</td>
+              <td>
+                {% if topic.status == "done" %}
+                  <span class="badge bg-success">Completed</span>
+                {% else %}
+                  <span class="badge bg-warning text-dark">Pending</span>
+                {% endif %}
+              </td>
+              <td>
+                <a href="{% url 'toggle_status' topic.id %}"
+                   class="btn btn-sm btn-outline-primary">
+                  {% if topic.status == "done" %}
+                    Mark Pending
+                  {% else %}
+                    Mark Completed
+                  {% endif %}
+                </a>
+
+                <a href="{% url 'delete_topic' topic.id %}"
+                   class="btn btn-sm btn-outline-danger"
+                   onclick="return confirm('Delete this topic?');">
+                  Delete
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+    {% else %}
+      <p class="text-muted mb-0">No topics yet. Add your first topic above!</p>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
