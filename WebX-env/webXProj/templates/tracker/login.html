@@ -12,12 +12,28 @@
   --radius:20px;
 }
 
+<<<<<<< HEAD
 .login-wrap{
   display:flex;
   justify-content:center;
   margin-top:28px;
   margin-bottom:28px;
 }
+=======
+    <form method="post">
+      {% csrf_token %}
+      {{ form.non_field_errors }} 
+      <div class="mb-3">
+        <label class="form-label">Username</label>
+        <input type="text" name="username" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Password</label>
+        <input type="password" name="password" class="form-control" required>
+      </div>
+      <button type="submit" class="btn btn-primary w-100">Login</button>
+    </form>
+>>>>>>> eaf8520af241e9f83a986b6ca41faaf6c092a6cc
 
 .login-card{
   width:100%;
