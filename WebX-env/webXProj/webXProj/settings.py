@@ -81,11 +81,11 @@ WSGI_APPLICATION = 'webXProj.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'Interview_prep',
+        'NAME': 'friendsdb',
         'USER':'root',
-        "PASSWORD":'root',
+        "PASSWORD":'Srinu01',
         'HOST':'localhost',
-        'PORT':'3306'
+        'PORT':'3305'
     }
 }
 
