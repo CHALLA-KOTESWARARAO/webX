@@ -20,7 +20,15 @@
       <canvas id="categoryBarChart"></canvas>
     </div>
   </div>
+
 </div>
+
+<!-- Suggestion based on weakest topic -->
+{% if weak_topic %}
+<div class="alert alert-warning text-center mt-4 fw-bold">
+  Suggestion: Focus more on <span class="text-danger">{{ weak_topic }}</span> category to improve your performance 
+</div>
+{% endif %}
 
 <!-- Back Button -->
 <div class="text-center mt-4">

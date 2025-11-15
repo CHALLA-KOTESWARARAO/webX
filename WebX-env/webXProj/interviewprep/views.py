@@ -91,25 +91,37 @@ def practice_view(request):
     current_index = request.session.get("current_index", 0)
     score = request.session.get("score", 0)
 
+    # Validate session questions (DB updated → remove stale IDs)
+    if question_ids:
+        valid_qs = Question.objects.filter(id__in=question_ids).count()
+        if valid_qs != len(question_ids):
+            for key in ["selected_category", "selected_topic", "question_ids", "current_index", "score"]:
+                request.session.pop(key, None)
+            question_ids = []
+            selected_category = None
+            selected_topic = None
+
     if request.method == "POST":
         mode = request.POST.get("mode")
 
-        # Step 1: Start Test -> Select Category & Topic & Load 10 Questions
+        # Step 1 → Start Test
         if mode == "start_test":
+            for key in ["selected_category", "selected_topic", "question_ids", "current_index", "score"]:
+                request.session.pop(key, None)
+
             selected_category = request.POST.get("category")
             selected_topic = request.POST.get("topic")
 
-            questions = list(
-                Question.objects.filter(
-                    category=selected_category, topic=selected_topic
-                ).order_by("?")[:10]
-            )
+            questions = list(Question.objects.filter(
+                category=selected_category,
+                topic=selected_topic
+            ).order_by("?")[:10])
 
             if not questions:
                 return render(request, "tracker/practice.html", {
                     "categories": categories,
                     "topics_by_category": json.dumps(topics_by_category),
-                    "error": "⚠ No questions found for this topic!",
+                    "error": "⚠ No questions available for this topic!"
                 })
 
             request.session["selected_category"] = selected_category
@@ -120,7 +132,7 @@ def practice_view(request):
 
             return redirect("practice")
 
-        # Step 2: Answer → Next Question
+        # Step 2 → Next Question
         elif mode == "next_question":
             qid = question_ids[current_index]
             user_answer = request.POST.get("answer", "").strip()
@@ -132,24 +144,39 @@ def practice_view(request):
             request.session["current_index"] = current_index + 1
             return redirect("practice")
 
-        # Step 3: Submit Test
+        # Step 3 → Submit Test
         elif mode == "submit_test":
             total = len(question_ids)
-            percentage = (score / total) * 100
+            percentage = (score / total) * 100 if total > 0 else 0
+
+            # Validation rule → Need 90% to pass
+            test_completed = True if percentage >= 90 else False
 
             TestScore.objects.update_or_create(
                 user=request.user,
                 topic=selected_topic,
-                defaults={"score": percentage, "completed": True}
+                defaults={"score": percentage, "completed": test_completed}
             )
 
-            # Keep login session alive → remove ONLY test-related data
+            # Clear session
             for key in ["selected_category", "selected_topic", "question_ids", "current_index", "score"]:
                 request.session.pop(key, None)
 
-            return redirect("dashboard")
+            message = (
+                "🎉 Congratulations! You passed successfully!"
+                if test_completed else
+                "⚠ You scored below 90%. Prepare well and retake the test."
+            )
 
-    # Show current question (if test started)
+            # Result Page Render
+            return render(request, "tracker/test_result.html", {
+                "topic": selected_topic,
+                "score": round(percentage, 2),
+                "passed": test_completed,
+                "message": message,
+            })
+
+    # Display Question
     if question_ids and current_index < len(question_ids):
         q = Question.objects.get(id=question_ids[current_index])
         options = {
@@ -162,7 +189,7 @@ def practice_view(request):
         q = None
         options = None
 
-    context = {
+    return render(request, "tracker/practice.html", {
         "categories": categories,
         "topics_by_category": json.dumps(topics_by_category),
         "selected_category": selected_category,
@@ -172,9 +199,8 @@ def practice_view(request):
         "total": len(question_ids),
         "options": options,
         "score": score,
-    }
+    })
 
-    return render(request, "tracker/practice.html", context)
 
 
 @login_required
@@ -249,10 +275,16 @@ def progress_analytics_view(request):
     total_completed = 0
     total_pending = 0
 
+    weak_topic = None
+    lowest_percent = 101  # start higher than 100
+
     for category, topics in topics_data.items():
         completed = TestScore.objects.filter(
-            user=request.user, topic__in=topics, completed=True
+            user=request.user,
+            topic__in=topics,
+            completed=True
         ).count()
+
         total_topics = len(topics)
         pending = total_topics - completed
 
@@ -269,8 +301,14 @@ def progress_analytics_view(request):
             "percent": percent
         })
 
+        # Track weakest category
+        if percent < lowest_percent:
+            lowest_percent = percent
+            weak_topic = category
+
     return render(request, "tracker/progress_analytics.html", {
         "analytics": analytics,
         "total_completed": total_completed,
         "total_pending": total_pending,
+        "weak_topic": weak_topic,
     })
